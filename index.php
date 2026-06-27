@@ -37,8 +37,8 @@
   /* HERO */
   .hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden}
   .hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,var(--espresso) 0%,var(--roast) 60%,#5a2d00 100%)}
-  .hero-img{position:absolute;right:0;top:0;bottom:0;width:55%;object-fit:cover;opacity:0.35;mix-blend-mode:luminosity}
-  .hero-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(26,10,0,0.95) 40%,transparent 100%)}
+  .hero-img{position:absolute;right:-70px;top:0;bottom:0;width:50%;object-fit:cover;opacity:0.35;mix-blend-mode:luminosity}
+  .hero-overlay{position:absolute;inset:0;background:linear-gradient(90deg, rgb(26 10 0 / 71%) 40%, transparent 100%)}
   .hero-content{position:relative;z-index:2;padding:0 5%;max-width:660px;animation:fadeUp 1s ease both}
   .hero-eyebrow{color:var(--caramel);font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:600;margin-bottom:20px}
   .hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.6rem,5vw,4.4rem);color:var(--white);line-height:1.1;margin-bottom:24px}
@@ -289,7 +289,7 @@
     <li><a href="#contact">Contact</a></li>
   </ul>
   <button class="nav-cart" onclick="openCart()">
-    🛒 Cart
+    Cart
     <span class="cart-count" id="cartCount">0</span>
   </button>
   <button class="hamburger" onclick="toggleMobile()">
@@ -300,10 +300,10 @@
 <!-- HERO -->
 <section class="hero" id="home">
   <div class="hero-bg"></div>
-  <img class="hero-img" src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200&auto=format&fit=crop&q=80" alt="Coffee hero"/>
+  <img class="hero-img" src="hero_bg.png" alt="Coffee hero"/>
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <p class="hero-eyebrow">☕ Specialty Coffee · Since 2018</p>
+    <p class="hero-eyebrow">Specialty Coffee · Since 2018</p>
     <h1 class="hero-title">Where Every Cup<br/>Tells a <em>Story</em></h1>
     <p class="hero-sub">Hand-crafted brews, single-origin beans, and a warm space to call your own. At Inder Caffeinate, coffee is more than a drink — it's a ritual.</p>
     <a href="#menu" class="btn-primary">Explore Our Menu</a>
