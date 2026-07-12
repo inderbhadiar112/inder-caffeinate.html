@@ -200,6 +200,16 @@
   .modal-close{position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.4);color:#fff;border:none;border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .modal-wrap{position:relative}
 
+  #sparkleTrail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 99999;
+  }
+
   /* CUSTOM CURSOR */
   body {
     cursor: none; /* Hide default cursor */
@@ -897,6 +907,88 @@ interactables.forEach(el => {
     cursorOutline.classList.remove('hover');
   });
 });
+
+// Sparkle Lightning Trail
+const canvas = document.createElement('canvas');
+canvas.id = 'sparkleTrail';
+document.body.appendChild(canvas);
+const ctx = canvas.getContext('2d');
+
+let width, height;
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const particles = [];
+const colors = ['#C87941', '#FFD700', '#FFFFFF', '#FF8C00'];
+
+class Spark {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.angle = Math.random() * Math.PI * 2;
+    this.speed = Math.random() * 6 + 2;
+    this.life = 1.0;
+    this.decay = Math.random() * 0.04 + 0.02;
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    this.size = Math.random() * 2 + 1;
+    this.history = [{x: this.x, y: this.y}];
+  }
+  update() {
+    this.life -= this.decay;
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed;
+    // Add jagged lightning movement
+    this.angle += (Math.random() - 0.5) * 1.8;
+    this.history.push({x: this.x, y: this.y});
+    if (this.history.length > 6) this.history.shift();
+  }
+  draw(ctx) {
+    ctx.beginPath();
+    if(this.history.length > 0) {
+      ctx.moveTo(this.history[0].x, this.history[0].y);
+      for(let i=1; i<this.history.length; i++) {
+        ctx.lineTo(this.history[i].x, this.history[i].y);
+      }
+    }
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = this.size * this.life;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = this.life;
+    ctx.stroke();
+    
+    // Sometimes draw a sparkle burst
+    if(Math.random() < 0.15) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * this.life * 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+    }
+  }
+}
+
+window.addEventListener('mousemove', (e) => {
+  for(let i = 0; i < 2; i++) {
+    particles.push(new Spark(e.clientX, e.clientY));
+  }
+});
+
+function animateSparkles() {
+  ctx.clearRect(0, 0, width, height);
+  for(let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    particles[i].draw(ctx);
+    if(particles[i].life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+  requestAnimationFrame(animateSparkles);
+}
+animateSparkles();
 </script>
 </body>
 </html>
