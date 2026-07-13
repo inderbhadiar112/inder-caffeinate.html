@@ -1,18 +1,33 @@
 <?php
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', ''); // Default XAMPP password is empty
-define('DB_NAME', 'inder_cafe');
+// Supabase PostgreSQL Database configuration
+$dbUrl = getenv('DATABASE_URL');
 
-// Create connection
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
-// Check connection
-if ($conn->connect_error) {
-    die(json_encode(["status" => "error", "message" => "Connection failed: " . $conn->connect_error]));
+if ($dbUrl) {
+    // Parse the DATABASE_URL provided by Vercel/Supabase
+    $dbopts = parse_url($dbUrl);
+    $host = $dbopts["host"];
+    $port = $dbopts["port"];
+    $user = $dbopts["user"];
+    $pass = urldecode($dbopts["pass"]); // Decode special characters if url-encoded
+    $dbname = ltrim($dbopts["path"], '/');
+} else {
+    // Direct connection for local testing
+    $host = 'db.zwylsxvmhjjvchkeqhiq.supabase.co';
+    $port = '5432';
+    $dbname = 'postgres';
+    $user = 'postgres';
+    $pass = 'Inder@Cafe555';
 }
 
-// Set charset to utf8mb4
-$conn->set_charset("utf8mb4");
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+
+try {
+    // Create PDO connection
+    $conn = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+} catch (PDOException $e) {
+    die(json_encode(["status" => "error", "message" => "Database connection failed. Please check your credentials."]));
+}
 ?>

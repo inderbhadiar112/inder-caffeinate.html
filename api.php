@@ -6,14 +6,12 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'get_menu') {
-        $result = $conn->query("SELECT * FROM menu_items ORDER BY id DESC");
+        $stmt = $conn->query("SELECT * FROM menu_items ORDER BY id DESC");
         $menu_items = [];
-        if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) {
-                $row['id'] = (int)$row['id'];
-                $row['price'] = (int)$row['price'];
-                $menu_items[] = $row;
-            }
+        while($row = $stmt->fetch()) {
+            $row['id'] = (int)$row['id'];
+            $row['price'] = (int)$row['price'];
+            $menu_items[] = $row;
         }
         echo json_encode(["status" => "success", "data" => $menu_items]);
         exit;
@@ -25,24 +23,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode(["status" => "error", "message" => "Unauthorized"]);
             exit;
         }
-        $result = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
+        $stmt = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
         $messages = [];
-        if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) {
-                $messages[] = $row;
-            }
+        while($row = $stmt->fetch()) {
+            $messages[] = $row;
         }
         echo json_encode(["status" => "success", "data" => $messages]);
         exit;
     }
 
     if ($action === 'get_ratings') {
-        $result = $conn->query("SELECT * FROM ratings WHERE status='approved' ORDER BY created_at DESC LIMIT 10");
+        $stmt = $conn->query("SELECT * FROM ratings WHERE status='approved' ORDER BY created_at DESC LIMIT 10");
         $ratings = [];
-        if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) {
-                $ratings[] = $row;
-            }
+        while($row = $stmt->fetch()) {
+            $ratings[] = $row;
         }
         echo json_encode(["status" => "success", "data" => $ratings]);
         exit;
@@ -53,11 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     if ($action === 'submit_contact') {
-        $first_name = $conn->real_escape_string($data['firstName'] ?? '');
-        $last_name = $conn->real_escape_string($data['lastName'] ?? '');
-        $email = $conn->real_escape_string($data['email'] ?? '');
-        $subject = $conn->real_escape_string($data['subject'] ?? '');
-        $message = $conn->real_escape_string($data['message'] ?? '');
+        $first_name = $data['firstName'] ?? '';
+        $last_name = $data['lastName'] ?? '';
+        $email = $data['email'] ?? '';
+        $subject = $data['subject'] ?? '';
+        $message = $data['message'] ?? '';
 
         if (!$first_name || !$email || !$message) {
             echo json_encode(["status" => "error", "message" => "Missing required fields"]);
@@ -65,14 +59,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt = $conn->prepare("INSERT INTO contact_messages (first_name, last_name, email, subject, message) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $first_name, $last_name, $email, $subject, $message);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([$first_name, $last_name, $email, $subject, $message])) {
             echo json_encode(["status" => "success", "message" => "Message saved successfully"]);
         } else {
             echo json_encode(["status" => "error", "message" => "Error saving message"]);
         }
-        $stmt->close();
         exit;
     }
 
@@ -88,26 +80,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Start transaction
-        $conn->begin_transaction();
+        $conn->beginTransaction();
 
         try {
             $stmt = $conn->prepare("INSERT INTO orders (total_amount, tax_amount, grand_total) VALUES (?, ?, ?)");
-            $stmt->bind_param("ddd", $total, $tax, $grand_total);
-            $stmt->execute();
-            $order_id = $stmt->insert_id;
-            $stmt->close();
+            $stmt->execute([$total, $tax, $grand_total]);
+            
+            // Get the inserted ID
+            // For Postgres, lastInsertId sometimes requires the sequence name, but usually works without it if driver supports it, or use RETURNING id
+            $order_id = $conn->lastInsertId();
+            
+            // If lastInsertId() doesn't work out-of-the-box in PDO PGSQL for a table,
+            // we'll rely on it, but generally it's safer with RETURNING. However, PDO pgsql supports lastInsertId() with no args for the last sequence used.
 
             $stmt = $conn->prepare("INSERT INTO order_items (order_id, item_id, quantity, price) VALUES (?, ?, ?, ?)");
             foreach ($cart as $item) {
-                $stmt->bind_param("iiii", $order_id, $item['id'], $item['qty'], $item['price']);
-                $stmt->execute();
+                $stmt->execute([$order_id, $item['id'], $item['qty'], $item['price']]);
             }
-            $stmt->close();
 
             $conn->commit();
             echo json_encode(["status" => "success", "message" => "Order placed successfully"]);
         } catch (Exception $e) {
-            $conn->rollback();
+            $conn->rollBack();
             echo json_encode(["status" => "error", "message" => "Failed to process order: " . $e->getMessage()]);
         }
         exit;
@@ -121,12 +115,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $category = $conn->real_escape_string($data['category'] ?? '');
-        $name = $conn->real_escape_string($data['name'] ?? '');
-        $description = $conn->real_escape_string($data['description'] ?? '');
+        $category = $data['category'] ?? '';
+        $name = $data['name'] ?? '';
+        $description = $data['description'] ?? '';
         $price = (int)($data['price'] ?? 0);
-        $badge = $conn->real_escape_string($data['badge'] ?? '');
-        $img = $conn->real_escape_string($data['img'] ?? '');
+        $badge = $data['badge'] ?? '';
+        $img = $data['img'] ?? '';
 
         if (!$category || !$name || !$description || !$price || !$img) {
             echo json_encode(["status" => "error", "message" => "Missing required fields"]);
@@ -134,14 +128,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt = $conn->prepare("INSERT INTO menu_items (category, name, description, price, badge, img) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssdss", $category, $name, $description, $price, $badge, $img);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([$category, $name, $description, $price, $badge, $img])) {
             echo json_encode(["status" => "success", "message" => "Item added successfully"]);
         } else {
             echo json_encode(["status" => "error", "message" => "Error adding item"]);
         }
-        $stmt->close();
         exit;
     }
 
@@ -159,14 +151,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt = $conn->prepare("DELETE FROM menu_items WHERE id = ?");
-        $stmt->bind_param("i", $id);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([$id])) {
             echo json_encode(["status" => "success", "message" => "Item deleted successfully"]);
         } else {
             echo json_encode(["status" => "error", "message" => "Error deleting item"]);
         }
-        $stmt->close();
         exit;
     }
 
@@ -178,12 +168,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $id = (int)($data['id'] ?? 0);
-        $category = $conn->real_escape_string($data['category'] ?? '');
-        $name = $conn->real_escape_string($data['name'] ?? '');
-        $description = $conn->real_escape_string($data['description'] ?? '');
+        $category = $data['category'] ?? '';
+        $name = $data['name'] ?? '';
+        $description = $data['description'] ?? '';
         $price = (int)($data['price'] ?? 0);
-        $badge = $conn->real_escape_string($data['badge'] ?? '');
-        $img = $conn->real_escape_string($data['img'] ?? '');
+        $badge = $data['badge'] ?? '';
+        $img = $data['img'] ?? '';
 
         if (!$id || !$category || !$name || !$description || !$price || !$img) {
             echo json_encode(["status" => "error", "message" => "Missing required fields"]);
@@ -191,21 +181,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt = $conn->prepare("UPDATE menu_items SET category=?, name=?, description=?, price=?, badge=?, img=? WHERE id=?");
-        $stmt->bind_param("sssdssi", $category, $name, $description, $price, $badge, $img, $id);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([$category, $name, $description, $price, $badge, $img, $id])) {
             echo json_encode(["status" => "success", "message" => "Item updated successfully"]);
         } else {
             echo json_encode(["status" => "error", "message" => "Error updating item"]);
         }
-        $stmt->close();
         exit;
     }
 
     if ($action === 'submit_rating') {
-        $author = $conn->real_escape_string($data['author'] ?? '');
+        $author = $data['author'] ?? '';
         $stars = (int)($data['stars'] ?? 0);
-        $review = $conn->real_escape_string($data['review'] ?? '');
+        $review = $data['review'] ?? '';
 
         if (!$author || !$review || $stars < 1 || $stars > 5) {
             echo json_encode(["status" => "error", "message" => "Invalid rating data"]);
@@ -213,18 +201,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt = $conn->prepare("INSERT INTO ratings (author_name, stars, review_text) VALUES (?, ?, ?)");
-        $stmt->bind_param("sis", $author, $stars, $review);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([$author, $stars, $review])) {
             echo json_encode(["status" => "success", "message" => "Rating submitted successfully"]);
         } else {
             echo json_encode(["status" => "error", "message" => "Error submitting rating"]);
         }
-        $stmt->close();
         exit;
     }
 }
 
 echo json_encode(["status" => "error", "message" => "Invalid action"]);
-$conn->close();
+$conn = null;
 ?>
