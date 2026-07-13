@@ -1,15 +1,18 @@
 <?php
 // Supabase PostgreSQL Database configuration
+$dbConnected = false;
+$conn = null;
+
 $dbUrl = getenv('DATABASE_URL');
 
 if ($dbUrl) {
     // Parse the DATABASE_URL provided by Vercel/Supabase
     $dbopts = parse_url($dbUrl);
-    $host = $dbopts["host"];
-    $port = $dbopts["port"];
-    $user = $dbopts["user"];
-    $pass = urldecode($dbopts["pass"]); // Decode special characters if url-encoded
-    $dbname = ltrim($dbopts["path"], '/');
+    $host = $dbopts["host"] ?? '';
+    $port = $dbopts["port"] ?? '5432';
+    $user = $dbopts["user"] ?? '';
+    $pass = urldecode($dbopts["pass"] ?? '');
+    $dbname = ltrim($dbopts["path"] ?? '', '/');
 } else {
     // Direct connection for local testing
     $host = 'db.zwylsxvmhjjvchkeqhiq.supabase.co';
@@ -27,7 +30,8 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
+    $dbConnected = true;
 } catch (PDOException $e) {
-    die(json_encode(["status" => "error", "message" => "Database connection failed. Please check your credentials."]));
+    $dbConnected = false;
 }
 ?>

@@ -4,14 +4,74 @@ require_once 'config.php';
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
+function getFallbackMenu() {
+    return [
+        [
+            'id' => 1,
+            'category' => 'espresso',
+            'cat' => 'espresso',
+            'name' => 'Velvet Latte',
+            'description' => 'Silky espresso with house-made vanilla foam.',
+            'desc' => 'Silky espresso with house-made vanilla foam.',
+            'price' => 280,
+            'badge' => 'Best Seller',
+            'img' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80'
+        ],
+        [
+            'id' => 2,
+            'category' => 'cold',
+            'cat' => 'cold',
+            'name' => 'Iced Maple Cortado',
+            'description' => 'Bold espresso and maple sweetness over ice.',
+            'desc' => 'Bold espresso and maple sweetness over ice.',
+            'price' => 260,
+            'badge' => 'New',
+            'img' => 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80'
+        ],
+        [
+            'id' => 3,
+            'category' => 'food',
+            'cat' => 'food',
+            'name' => 'Honey Almond Toast',
+            'description' => 'Toasted sourdough with almond cream and citrus.',
+            'desc' => 'Toasted sourdough with almond cream and citrus.',
+            'price' => 240,
+            'badge' => 'Fresh',
+            'img' => 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80'
+        ],
+        [
+            'id' => 4,
+            'category' => 'seasonal',
+            'cat' => 'seasonal',
+            'name' => 'Spiced Cinnamon Mocha',
+            'description' => 'Dark chocolate, cinnamon, and espresso.',
+            'desc' => 'Dark chocolate, cinnamon, and espresso.',
+            'price' => 300,
+            'badge' => 'Seasonal',
+            'img' => 'https://images.unsplash.com/photo-1517705008128-361805f42e86?auto=format&fit=crop&w=900&q=80'
+        ]
+    ];
+}
+
+function getFallbackRatings() {
+    return [
+        ['id' => 1, 'author_name' => 'Aisha', 'stars' => 5, 'review_text' => 'The best cappuccino in the city.'],
+        ['id' => 2, 'author_name' => 'Michael', 'stars' => 5, 'review_text' => 'Warm atmosphere and excellent service.']
+    ];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'get_menu') {
-        $stmt = $conn->query("SELECT * FROM menu_items ORDER BY id DESC");
-        $menu_items = [];
-        while($row = $stmt->fetch()) {
-            $row['id'] = (int)$row['id'];
-            $row['price'] = (int)$row['price'];
-            $menu_items[] = $row;
+        if ($dbConnected && $conn) {
+            $stmt = $conn->query("SELECT * FROM menu_items ORDER BY id DESC");
+            $menu_items = [];
+            while($row = $stmt->fetch()) {
+                $row['id'] = (int)$row['id'];
+                $row['price'] = (int)$row['price'];
+                $menu_items[] = $row;
+            }
+        } else {
+            $menu_items = getFallbackMenu();
         }
         echo json_encode(["status" => "success", "data" => $menu_items]);
         exit;
@@ -23,20 +83,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode(["status" => "error", "message" => "Unauthorized"]);
             exit;
         }
-        $stmt = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
-        $messages = [];
-        while($row = $stmt->fetch()) {
-            $messages[] = $row;
+        if ($dbConnected && $conn) {
+            $stmt = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
+            $messages = [];
+            while($row = $stmt->fetch()) {
+                $messages[] = $row;
+            }
+        } else {
+            $messages = [];
         }
         echo json_encode(["status" => "success", "data" => $messages]);
         exit;
     }
 
     if ($action === 'get_ratings') {
-        $stmt = $conn->query("SELECT * FROM ratings WHERE status='approved' ORDER BY created_at DESC LIMIT 10");
-        $ratings = [];
-        while($row = $stmt->fetch()) {
-            $ratings[] = $row;
+        if ($dbConnected && $conn) {
+            $stmt = $conn->query("SELECT * FROM ratings WHERE status='approved' ORDER BY created_at DESC LIMIT 10");
+            $ratings = [];
+            while($row = $stmt->fetch()) {
+                $ratings[] = $row;
+            }
+        } else {
+            $ratings = getFallbackRatings();
         }
         echo json_encode(["status" => "success", "data" => $ratings]);
         exit;
@@ -58,12 +126,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmt = $conn->prepare("INSERT INTO contact_messages (first_name, last_name, email, subject, message) VALUES (?, ?, ?, ?, ?)");
-        
-        if ($stmt->execute([$first_name, $last_name, $email, $subject, $message])) {
-            echo json_encode(["status" => "success", "message" => "Message saved successfully"]);
+        if ($dbConnected && $conn) {
+            $stmt = $conn->prepare("INSERT INTO contact_messages (first_name, last_name, email, subject, message) VALUES (?, ?, ?, ?, ?)");
+            if ($stmt->execute([$first_name, $last_name, $email, $subject, $message])) {
+                echo json_encode(["status" => "success", "message" => "Message saved successfully"]);
+            } else {
+                echo json_encode(["status" => "error", "message" => "Error saving message"]);
+            }
         } else {
-            echo json_encode(["status" => "error", "message" => "Error saving message"]);
+            echo json_encode(["status" => "success", "message" => "Message received. Demo mode is active."]);
         }
         exit;
     }
@@ -79,6 +150,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        if (!$dbConnected || !$conn) {
+            echo json_encode(["status" => "success", "message" => "Order received. Demo mode is active."]);
+            exit;
+        }
+
         // Start transaction
         $conn->beginTransaction();
 
@@ -86,12 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO orders (total_amount, tax_amount, grand_total) VALUES (?, ?, ?)");
             $stmt->execute([$total, $tax, $grand_total]);
             
-            // Get the inserted ID
-            // For Postgres, lastInsertId sometimes requires the sequence name, but usually works without it if driver supports it, or use RETURNING id
             $order_id = $conn->lastInsertId();
-            
-            // If lastInsertId() doesn't work out-of-the-box in PDO PGSQL for a table,
-            // we'll rely on it, but generally it's safer with RETURNING. However, PDO pgsql supports lastInsertId() with no args for the last sequence used.
 
             $stmt = $conn->prepare("INSERT INTO order_items (order_id, item_id, quantity, price) VALUES (?, ?, ?, ?)");
             foreach ($cart as $item) {
@@ -108,7 +179,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'add_item') {
-        // Simple security check (in a real app, use sessions)
         $password = $data['password'] ?? '';
         if ($password !== 'admin123') {
             echo json_encode(["status" => "error", "message" => "Unauthorized"]);
@@ -124,6 +194,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$category || !$name || !$description || !$price || !$img) {
             echo json_encode(["status" => "error", "message" => "Missing required fields"]);
+            exit;
+        }
+
+        if (!$dbConnected || !$conn) {
+            echo json_encode(["status" => "success", "message" => "Item added in demo mode"]);
             exit;
         }
 
@@ -147,6 +222,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)($data['id'] ?? 0);
         if (!$id) {
             echo json_encode(["status" => "error", "message" => "Invalid item ID"]);
+            exit;
+        }
+
+        if (!$dbConnected || !$conn) {
+            echo json_encode(["status" => "success", "message" => "Item deleted in demo mode"]);
             exit;
         }
 
@@ -180,6 +260,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        if (!$dbConnected || !$conn) {
+            echo json_encode(["status" => "success", "message" => "Item updated in demo mode"]);
+            exit;
+        }
+
         $stmt = $conn->prepare("UPDATE menu_items SET category=?, name=?, description=?, price=?, badge=?, img=? WHERE id=?");
         
         if ($stmt->execute([$category, $name, $description, $price, $badge, $img, $id])) {
@@ -197,6 +282,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$author || !$review || $stars < 1 || $stars > 5) {
             echo json_encode(["status" => "error", "message" => "Invalid rating data"]);
+            exit;
+        }
+
+        if (!$dbConnected || !$conn) {
+            echo json_encode(["status" => "success", "message" => "Rating submitted. Demo mode is active."]);
             exit;
         }
 

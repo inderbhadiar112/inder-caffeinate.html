@@ -1547,7 +1547,7 @@
   <!-- HERO -->
   <section class="hero" id="home">
     <div class="hero-bg" id="hero-vanta"
-      style="background-color: #a99990; background-image: linear-gradient(to right, #a99990 50%, transparent 55%), url('hero_bg.png'); background-size: 100% 100%, 52%; background-position: left top, right 45%; background-repeat: no-repeat; top: 70px; filter: brightness(1.5) saturate(1.2);">
+      style="background-color: #a99990; background-image: linear-gradient(to right, #a99990 50%, transparent 55%), url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80'); background-size: 100% 100%, 52%; background-position: left top, right 45%; background-repeat: no-repeat; top: 70px; filter: brightness(1.5) saturate(1.2);">
     </div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
