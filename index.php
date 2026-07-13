@@ -1683,45 +1683,16 @@
 
   <!-- TESTIMONIALS -->
   <section class="testimonials">
-    <p class="section-eyebrow">What Guests Say</p>
-    <h2 class="section-title">Loved by Coffee People</h2>
-    <div class="testi-grid">
-      <div class="testi-card">
-        <div class="stars">★★★★★</div>
-        <p class="testi-text">"I've tried coffee shops in 14 countries. Inder Caffeinate serves the finest espresso I've
-          ever had. The Ethiopian single-origin changed everything I thought I knew about coffee."</p>
-        <div class="testi-author">
-          <img class="testi-avatar" src="https://i.pravatar.cc/80?img=47" alt="Priya" />
-          <div>
-            <div class="testi-name">Priya Sharma</div>
-            <div class="testi-since">Regular since 2020</div>
-          </div>
-        </div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px;">
+      <div>
+        <p class="section-eyebrow">What Guests Say</p>
+        <h2 class="section-title">Loved by Coffee People</h2>
       </div>
-      <div class="testi-card">
-        <div class="stars">★★★★★</div>
-        <p class="testi-text">"The cold brew here is otherworldly — smooth, deep, and perfectly balanced. I come every
-          morning before work. The staff know my order by name."</p>
-        <div class="testi-author">
-          <img class="testi-avatar" src="https://i.pravatar.cc/80?img=32" alt="Marcus" />
-          <div>
-            <div class="testi-name">Marcus Webb</div>
-            <div class="testi-since">Regular since 2019</div>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="stars">★★★★★</div>
-        <p class="testi-text">"The atmosphere, the beans, the art on my latte — every detail is perfect. This is not
-          just coffee; it's an experience. Inder knows his craft."</p>
-        <div class="testi-author">
-          <img class="testi-avatar" src="https://i.pravatar.cc/80?img=56" alt="Aisha" />
-          <div>
-            <div class="testi-name">Aisha Ramos</div>
-            <div class="testi-since">Regular since 2021</div>
-          </div>
-        </div>
-      </div>
+      <button class="btn-outline" style="color:var(--espresso); border-color:var(--espresso)" onclick="document.getElementById('reviewModalOverlay').classList.add('open')">Leave a Review</button>
+    </div>
+    
+    <div class="testi-grid" id="testiGrid">
+      <p>Loading reviews...</p>
     </div>
   </section>
 
@@ -1879,6 +1850,29 @@
     </div>
   </div>
 
+  <!-- REVIEW MODAL -->
+  <div class="modal-overlay" id="reviewModalOverlay" onclick="if(event.target===this) this.classList.remove('open')">
+    <div class="modal-wrap">
+      <button class="modal-close" onclick="document.getElementById('reviewModalOverlay').classList.remove('open')">✕</button>
+      <div class="modal" style="padding:30px; background:white;">
+        <h2 style="font-family:'Playfair Display',serif; margin-bottom:20px; color:var(--espresso)">Leave a Review</h2>
+        <div class="form-group" style="margin-bottom:15px">
+          <label style="display:block; margin-bottom:5px; font-weight:600">Name</label>
+          <input type="text" id="rAuthor" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:15px">
+          <label style="display:block; margin-bottom:5px; font-weight:600">Rating (1-5)</label>
+          <input type="number" id="rStars" min="1" max="5" value="5" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom:20px">
+          <label style="display:block; margin-bottom:5px; font-weight:600">Review</label>
+          <textarea id="rText" rows="4" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; resize:none;"></textarea>
+        </div>
+        <button class="btn-primary" style="width:100%" onclick="submitRating()">Submit Review</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
@@ -1887,23 +1881,79 @@
   <!-- <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.fog.min.js"></script> -->
 
   <script>
-    let menuItems = [
-      { id: 1, cat: 'espresso', name: 'Classic Espresso', desc: 'A ristretto-pull of our house Ethiopian blend — dense, sweet, and luminous.', price: 180, badge: 'Signature', img: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=600&auto=format&fit=crop&q=80' },
-      { id: 2, cat: 'espresso', name: 'Caramel Latte', desc: 'Double espresso with velvety steamed milk and our housemade caramel syrup.', price: 240, badge: 'Bestseller', img: 'https://images.unsplash.com/photo-1561882468-9110e03e0f78?w=600&auto=format&fit=crop&q=80' },
-      { id: 3, cat: 'espresso', name: 'Flat White', desc: 'Micro-foam milk over a concentrated ristretto. The purist\'s choice.', price: 220, badge: '', img: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=600&auto=format&fit=crop&q=80' },
-      { id: 4, cat: 'espresso', name: 'Rose Cortado', desc: 'Equal parts espresso and rose-infused warm milk — delicate and fragrant.', price: 260, badge: 'Popular', img: 'https://images.unsplash.com/photo-1504630083234-14187a9df0f5?w=600&auto=format&fit=crop&q=80' },
-      { id: 5, cat: 'cold', name: 'Cold Brew Classic', desc: '18-hour steep of Colombian beans served over ice. Silky smooth with zero bitterness.', price: 270, badge: 'Fan Fav', img: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=600&auto=format&fit=crop&q=80' },
-      { id: 6, cat: 'cold', name: 'Nitro Brew', desc: 'Cold brew infused with nitrogen — cascading velvet in a glass.', price: 310, badge: 'New', img: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=600&auto=format&fit=crop&q=80' },
-      { id: 7, cat: 'cold', name: 'Iced Matcha Latte', desc: 'Ceremonial grade matcha whisked with oat milk over cold brew ice cubes.', price: 280, badge: '', img: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=600&auto=format&fit=crop&q=80' },
-      { id: 8, cat: 'food', name: 'Almond Croissant', desc: 'Buttery layers with almond frangipane and a dusting of icing sugar.', price: 180, badge: 'Baked Fresh', img: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&auto=format&fit=crop&q=80' },
-      { id: 9, cat: 'food', name: 'Avocado Toast', desc: 'Sourdough with smashed avocado, chilli flakes, and a poached egg.', price: 290, badge: '', img: 'https://foodsharingvegan.com/wp-content/uploads/2023/01/Rhodes-Avocado-Toast-Plant-Based-on-a-Budget-1-2-500x500.jpg' },
-      { id: 10, cat: 'food', name: 'Banana Bread', desc: 'Warm slice of our signature moist banana bread with walnut crumble.', price: 160, badge: '', img: 'https://www.honeywhatscooking.com/wp-content/uploads/2024/08/best-vegan-banana-bread-with-walnuts.jpg' },
-      { id: 11, cat: 'seasonal', name: 'Pumpkin Spice Latte', desc: 'Espresso blended with real pumpkin, warm spices, and oat milk cream.', price: 290, badge: 'Seasonal', img: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=600&auto=format&fit=crop&q=80' },
-      { id: 12, cat: 'seasonal', name: 'Lavender Fog', desc: 'Earl grey with lavender syrup, steamed almond milk, and vanilla.', price: 270, badge: 'Limited', img: 'https://images.unsplash.com/photo-1534040385115-33dcb3acba5b?w=600&auto=format&fit=crop&q=80' },
-    ];
+    let menuItems = [];
     let cart = [];
     let currentModal = null;
     let activeFilter = 'all';
+
+    // Fetch menu from backend
+    async function fetchMenu() {
+      try {
+        const response = await fetch('api.php?action=get_menu');
+        const data = await response.json();
+        if (data.status === 'success') {
+          menuItems = data.data;
+          renderMenu();
+        } else {
+          console.error('Failed to fetch menu:', data.message);
+          showToast('Error loading menu items');
+        }
+      } catch (error) {
+        console.error('Error fetching menu:', error);
+        showToast('Network error while loading menu');
+      }
+    }
+
+    async function loadRatings() {
+      try {
+        const res = await fetch('api.php?action=get_ratings');
+        const data = await res.json();
+        if(data.status === 'success' && data.data.length > 0) {
+          document.getElementById('testiGrid').innerHTML = data.data.map(r => `
+            <div class="testi-card">
+              <div class="stars" style="color:var(--caramel); font-size:1.2rem; margin-bottom:10px;">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+              <p class="testi-text" style="font-style:italic; margin-bottom:15px; color:#555;">"${r.review_text}"</p>
+              <div class="testi-author" style="font-weight:600;">— ${r.author_name}</div>
+            </div>
+          `).join('');
+        } else {
+          document.getElementById('testiGrid').innerHTML = '<p>No reviews yet. Be the first!</p>';
+        }
+      } catch (err) {
+        document.getElementById('testiGrid').innerHTML = '<p>Error loading reviews.</p>';
+      }
+    }
+
+    async function submitRating() {
+      const author = document.getElementById('rAuthor').value.trim();
+      const stars = document.getElementById('rStars').value;
+      const review = document.getElementById('rText').value.trim();
+
+      if(!author || !review || stars < 1 || stars > 5) {
+        showToast('⚠️ Please fill out all fields correctly.');
+        return;
+      }
+
+      try {
+        const res = await fetch('api.php?action=submit_rating', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({author, stars, review})
+        });
+        const data = await res.json();
+        if(data.status === 'success') {
+          showToast('🎉 Review submitted successfully!');
+          document.getElementById('reviewModalOverlay').classList.remove('open');
+          document.getElementById('rAuthor').value = '';
+          document.getElementById('rText').value = '';
+          loadRatings();
+        } else {
+          showToast('⚠️ Error submitting review.');
+        }
+      } catch(err) {
+        showToast('⚠️ Network error.');
+      }
+    }
 
     function renderMenu(filter = 'all') {
       const grid = document.getElementById('menuGrid');
@@ -1998,12 +2048,40 @@
       document.getElementById('cartSidebar').classList.remove('open');
     }
 
-    function checkout() {
+    async function checkout() {
       if (cart.length === 0) return;
-      cart = [];
-      updateCartUI();
-      closeCart();
-      showToast('🎉 Order placed! Thank you for choosing Inder Caffeinate.');
+      
+      const btn = document.querySelector('.checkout-btn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Processing...';
+      btn.disabled = true;
+
+      const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+      const tax = Math.round(total*0.05);
+      const grandTotal = total + tax;
+
+      try {
+        const response = await fetch('api.php?action=submit_order', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ cart, total, tax, grandTotal })
+        });
+        
+        const data = await response.json();
+        if(data.status === 'success') {
+          cart=[];
+          updateCartUI();
+          closeCart();
+          showToast('🎉 Order placed! Thank you for choosing Inder Caffeinate.');
+        } else {
+          showToast('⚠️ Error placing order. Please try again.');
+        }
+      } catch (err) {
+        showToast('⚠️ Network error. Please try again.');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     }
 
     function openModal(id) {
@@ -2204,7 +2282,8 @@
     });
 
     // Init
-    renderMenu();
+    fetchMenu();
+    loadRatings();
     updateCartUI();
 
     // Smooth nav highlight
